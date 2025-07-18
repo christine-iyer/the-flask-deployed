@@ -39,133 +39,115 @@ const imagePreview = document.getElementById("image-upload-preview");
 let uploadedImagePath = null;
 
 // Initialize the application
+// Move setupCloudinaryWidget to top-level
+function setupCloudinaryWidget() {
+  // Check if Cloudinary is available
+  if (typeof cloudinary === "undefined") {
+    console.error("Cloudinary widget not loaded");
+    return;
+  }
+
+  // Create upload widget with more features
+  const widget = cloudinary.createUploadWidget(
+    {
+      cloudName: "dqjhgnivi",
+      uploadPreset: "cocktail_uploads",
+      sources: [
+        "local", // File picker
+        "url", // Upload from URL
+        "camera", // Camera capture (mobile)
+        "image_search", // Search images (requires API key)
+        "facebook", // Facebook photos
+        "dropbox", // Dropbox
+        "google_drive", // Google Drive
+        "instagram", // Instagram
+      ],
+      multiple: false,
+      resourceType: "image",
+      clientAllowedFormats: ["jpg", "jpeg", "png", "gif", "webp"],
+      maxFileSize: 10000000, // 10MB
+      folder: "cocktails",
+      cropping: true, // Enable cropping
+      croppingAspectRatio: 1.0, // Square crop
+      showAdvancedOptions: true,
+      showInsecurePreview: true,
+      transformation: [
+        { width: 800, height: 600, crop: "limit" },
+        { quality: "auto" },
+      ],
+      theme: "minimal",
+      styles: {
+        palette: {
+          window: "#ffffff",
+          sourceBg: "#f4f4f5",
+          windowBorder: "#90a0b3",
+          tabIcon: "#0078ff",
+          inactiveTabIcon: "#69778a",
+          menuIcons: "#0078ff",
+          link: "#0078ff",
+          action: "#0078ff",
+          inProgress: "#0078ff",
+          complete: "#20b832",
+          error: "#ea2727",
+          textDark: "#000000",
+          textLight: "#ffffff",
+        },
+      },
+    },
+    (error, result) => {
+      if (!error && result && result.event === "success") {
+        console.log("Upload successful:", result.info);
+        uploadedImagePath = result.info.secure_url;
+
+        // Update preview with more info
+        imagePreview.innerHTML = `
+        <div style="border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: #f9f9f9;">
+          <img src="${
+            result.info.secure_url
+          }" alt="Preview" style="max-width:120px;max-height:80px;border-radius:8px;box-shadow:0 2px 8px #ccc;">
+          <div style="margin-top: 8px;">
+            <div style="color:green;font-size:12px;">✓ Upload successful</div>
+            <div style="color:#666;font-size:11px;">Size: ${Math.round(
+              result.info.bytes / 1024
+            )}KB</div>
+            <div style="color:#666;font-size:11px;">Format: ${result.info.format.toUpperCase()}</div>
+          </div>
+        </div>
+      `;
+      }
+
+      if (error) {
+        console.error("Upload error:", error);
+        imagePreview.innerHTML = `<div style="color:red;padding:10px;border:1px solid #ff6b6b;border-radius:4px;background:#ffe0e0;">Upload failed: ${
+          error.message || "Please try again"
+        }</div>`;
+      }
+    }
+  );
+
+  // Add click handler to open widget
+  const uploadButton = document.getElementById("cloudinary-upload-btn");
+  if (uploadButton) {
+    uploadButton.addEventListener("click", (e) => {
+      e.preventDefault();
+      console.log("Opening Cloudinary widget...");
+      widget.open();
+    });
+  } else {
+    console.error("Cloudinary upload button not found");
+  }
+}
+
+// Only one DOMContentLoaded handler
+
 document.addEventListener("DOMContentLoaded", function () {
   loadCocktails();
   setupEventListeners();
   setupImageUpload();
-  updateAdminButton(); // Initialize admin button state
-
-  // Add this after your existing setupImageUpload function
-
-  // Add this function after your existing setupImageUpload function
-  function setupCloudinaryWidget() {
-    // Check if Cloudinary is available
-    if (typeof cloudinary === "undefined") {
-      console.error("Cloudinary widget not loaded");
-      return;
-    }
-
-    // Create upload widget with more features
-    const widget = cloudinary.createUploadWidget(
-      {
-        cloudName: "dqjhgnivi",
-        uploadPreset: "cocktail_uploads",
-        sources: [
-          "local", // File picker
-          "url", // Upload from URL
-          "camera", // Camera capture (mobile)
-          "image_search", // Search images (requires API key)
-          "facebook", // Facebook photos
-          "dropbox", // Dropbox
-          "google_drive", // Google Drive
-          "instagram", // Instagram
-        ],
-        multiple: false,
-        resourceType: "image",
-        clientAllowedFormats: ["jpg", "jpeg", "png", "gif", "webp"],
-        maxFileSize: 10000000, // 10MB
-        folder: "cocktails",
-        cropping: true, // Enable cropping
-        croppingAspectRatio: 1.0, // Square crop
-        showAdvancedOptions: true,
-        showInsecurePreview: true,
-        transformation: [
-          { width: 800, height: 600, crop: "limit" },
-          { quality: "auto" },
-        ],
-        theme: "minimal",
-        styles: {
-          palette: {
-            window: "#ffffff",
-            sourceBg: "#f4f4f5",
-            windowBorder: "#90a0b3",
-            tabIcon: "#0078ff",
-            inactiveTabIcon: "#69778a",
-            menuIcons: "#0078ff",
-            link: "#0078ff",
-            action: "#0078ff",
-            inProgress: "#0078ff",
-            complete: "#20b832",
-            error: "#ea2727",
-            textDark: "#000000",
-            textLight: "#ffffff",
-          },
-        },
-      },
-      (error, result) => {
-        if (!error && result && result.event === "success") {
-          console.log("Upload successful:", result.info);
-          uploadedImagePath = result.info.secure_url;
-
-          // Update preview with more info
-          imagePreview.innerHTML = `
-          <div style="border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: #f9f9f9;">
-            <img src="${
-              result.info.secure_url
-            }" alt="Preview" style="max-width:120px;max-height:80px;border-radius:8px;box-shadow:0 2px 8px #ccc;">
-            <div style="margin-top: 8px;">
-              <div style="color:green;font-size:12px;">✓ Upload successful</div>
-              <div style="color:#666;font-size:11px;">Size: ${Math.round(
-                result.info.bytes / 1024
-              )}KB</div>
-              <div style="color:#666;font-size:11px;">Format: ${result.info.format.toUpperCase()}</div>
-            </div>
-          </div>
-        `;
-        }
-
-        if (error) {
-          console.error("Upload error:", error);
-          imagePreview.innerHTML = `<div style="color:red;padding:10px;border:1px solid #ff6b6b;border-radius:4px;background:#ffe0e0;">Upload failed: ${
-            error.message || "Please try again"
-          }</div>`;
-        }
-      }
-    );
-
-    // Add click handler to open widget
-    const uploadButton = document.getElementById("cloudinary-upload-btn");
-    if (uploadButton) {
-      uploadButton.addEventListener("click", (e) => {
-        e.preventDefault();
-        console.log("Opening Cloudinary widget...");
-        widget.open();
-      });
-    } else {
-      console.error("Cloudinary upload button not found");
-    }
-  }
-
-  // Update your DOMContentLoaded function to include setupCloudinaryWidget
-  document.addEventListener("DOMContentLoaded", function () {
-    loadCocktails();
-    setupEventListeners();
-    setupImageUpload();
-    setupCloudinaryWidget(); // Add this line
-    updateAdminButton(); // Initialize admin button state
-    // Hide form by default
-    document.getElementById("form-section").style.display = "none";
-    // Setup image modal events
-    setupImageModal();
-    // View changer logic
-    setupViewChanger();
-  });
-
-  // Hide form by default
+  setupCloudinaryWidget();
+  updateAdminButton();
   document.getElementById("form-section").style.display = "none";
-  // Setup image modal events
   setupImageModal();
-  // View changer logic
   setupViewChanger();
 });
 
@@ -624,7 +606,24 @@ async function handleFormSubmit(e) {
   e.preventDefault();
 
   const formData = new FormData(cocktailForm);
-  let theJpegValue = uploadedImagePath || formData.get("theJpeg") || null;
+
+  console.log("Form submission - uploadedImagePath:", uploadedImagePath);
+  console.log("Form submission - hidden field value:", formData.get("theJpeg"));
+
+  // Handle image persistence logic
+  let theJpegValue = null;
+  if (uploadedImagePath) {
+    // New image was uploaded
+    theJpegValue = uploadedImagePath;
+    console.log("Using new uploaded image:", theJpegValue);
+  } else if (formData.get("theJpeg")) {
+    // Existing image should be preserved
+    theJpegValue = formData.get("theJpeg");
+    console.log("Preserving existing image:", theJpegValue);
+  } else {
+    console.log("No image to preserve");
+  }
+
   const cocktailData = {
     theCock: formData.get("theCock"),
     theIngredients: formData.get("theIngredients"),
@@ -632,6 +631,8 @@ async function handleFormSubmit(e) {
     theJpeg: theJpegValue,
     theComment: formData.get("theComment") || null,
   };
+
+  console.log("Final cocktail data:", cocktailData);
 
   try {
     if (editingId) {
@@ -707,6 +708,9 @@ function performEditCocktail(id) {
   const cocktail = cocktails.find((c) => c._id === id);
   if (!cocktail) return;
 
+  console.log("Editing cocktail:", cocktail);
+  console.log("Original image URL:", cocktail.theJpeg);
+
   editingId = id;
   formTitle.textContent = "Edit Cocktail";
   cancelBtn.style.display = "inline-flex";
@@ -718,6 +722,28 @@ function performEditCocktail(id) {
   document.getElementById("theRecipe").value = cocktail.theRecipe;
   document.getElementById("theJpeg").value = cocktail.theJpeg || "";
   document.getElementById("theComment").value = cocktail.theComment || "";
+
+  console.log(
+    "Hidden field value after setting:",
+    document.getElementById("theJpeg").value
+  );
+
+  // Add a temporary debug button to check the hidden field
+  const debugBtn = document.createElement("button");
+  debugBtn.textContent = "Debug: Check Hidden Field";
+  debugBtn.onclick = () => {
+    console.log(
+      "Current hidden field value:",
+      document.getElementById("theJpeg").value
+    );
+    console.log("Current uploadedImagePath:", uploadedImagePath);
+    console.log("Current editingId:", editingId);
+  };
+  debugBtn.style.position = "fixed";
+  debugBtn.style.top = "10px";
+  debugBtn.style.right = "10px";
+  debugBtn.style.zIndex = "9999";
+  document.body.appendChild(debugBtn);
   // this is prob ok
   // Show existing image in preview if it exists
   if (cocktail.theJpeg) {
@@ -727,7 +753,8 @@ function performEditCocktail(id) {
         <img src="${cocktail.theJpeg}" alt="Current image" style="max-width:120px;max-height:80px;border-radius:8px;box-shadow:0 2px 8px #ccc;">
         <div style="color:green;font-size:12px;">Current image</div>
       `;
-      uploadedImagePath = cocktail.theJpeg;
+      // Don't set uploadedImagePath here - we want to preserve the original
+      // uploadedImagePath will only be set when a new image is uploaded
     } else {
       // It's a local/broken image
       imagePreview.innerHTML = `
@@ -757,7 +784,12 @@ function cancelEdit() {
 
 // Reset form
 function resetForm() {
-  cocktailForm.reset();
+  // Manually clear form fields instead of using reset() to preserve hidden fields
+  document.getElementById("theCock").value = "";
+  document.getElementById("theIngredients").value = "";
+  document.getElementById("theRecipe").value = "";
+  document.getElementById("theComment").value = "";
+
   editingId = null;
   uploadedImagePath = null;
   formTitle.textContent = "Add New Cocktail";
@@ -773,6 +805,9 @@ function resetForm() {
   if (fileInput) {
     fileInput.value = "";
   }
+
+  // Clear the hidden theJpeg field
+  document.getElementById("theJpeg").value = "";
 }
 
 // Delete cocktail
@@ -883,19 +918,3 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
-
-// Add this temporarily to test the button
-document.addEventListener("DOMContentLoaded", function () {
-  // ... your existing code ...
-
-  // Test button click
-  const testButton = document.getElementById("cloudinary-upload-btn");
-  if (testButton) {
-    testButton.addEventListener("click", function () {
-      console.log("Button clicked!");
-      alert("Button works!");
-    });
-  } else {
-    console.error("Button not found!");
-  }
-});
